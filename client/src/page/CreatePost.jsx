@@ -33,23 +33,27 @@ const CreatePost = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            prompt: form.prompt,
-          }),
-          mode: 'no-cors'
+          body: JSON.stringify({ prompt: form.prompt }),
         });
-
+  
+        // Check if response is okay and handle errors
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+  
         const data = await response.json();
-        setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo}` });
+        setForm({ ...form, photo: `${data.photo}` });
       } catch (err) {
-        alert(err);
+        console.error('Error:', err);
+        alert('Error generating image: ' + err.message);
       } finally {
         setGeneratingImg(false);
       }
     } else {
-      alert('Please provide proper prompt');
+      alert('Please provide a proper prompt');
     }
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,7 +67,7 @@ const CreatePost = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ ...form }),
-          mode: 'no-cors'
+          
         });
 
         await response.json();

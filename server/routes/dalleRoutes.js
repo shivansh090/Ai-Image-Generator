@@ -17,23 +17,43 @@ router.route('/').get((req, res) => {
 });
 
 router.route('/').post(async (req, res) => {
+  const { prompt } = req.body;
+  const auth = process.env.HUGGING_FACE_API
   try {
-    const prompt  = req.body;
-    console.log(prompt);
-    if(!prompt) return console.log("No prompt recieved");
-    const aiResponse = await openai.createImage({
-      prompt,
-      n: 1,
-      size: '1024x1024',
-      response_format: 'b64_json',
-    });
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+      {
+        headers: {
+          Authorization: `Bearer ${auth}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          inputs: prompt,
+        }),
+      }
+    );
 
-    const image = aiResponse.data.data[0].b64_json;
-    res.status(200).json({ photo: image });
+    // Check if the response is JSON (indicating an error)
+    const contentType = response.headers.get("Content-Type");
+    if (contentType && contentType.includes("application/json")) {
+      const errorData = await response.json();
+      console.error("Error from API:", errorData);  // Log the error message
+      return res.status(500).json({ error: errorData });
+    }
+
+    // If the response is not JSON, assume it's the image data
+    const image = await response.blob();
+    const imageBuffer = await image.arrayBuffer();
+    const base64Image = Buffer.from(imageBuffer).toString("base64");
+
+    // Send the base64 image as a response
+    res.status(200).json({ photo: `data:image/jpeg;base64,${base64Image}` });
   } catch (error) {
-    console.error(error);
-    res.status(500).send(error?.response.data.error.message || 'Something went wrong');
+    console.error("Error fetching image:", error);
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
+
 
 export default router;
