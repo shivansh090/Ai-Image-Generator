@@ -21,7 +21,7 @@ router.route('/').post(async (req, res) => {
   const auth = process.env.HUGGING_FACE_API
   try {
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+      "https://router.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
       {
         headers: {
           Authorization: `Bearer ${auth}`,
